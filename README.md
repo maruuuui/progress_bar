@@ -155,19 +155,22 @@ def index(request):
 <script>
     //プログレスバー表示部分の初期状態
     const progresshtml = '<div id="progress">プログレスバー表示部分</div>';
-
+    
+const setup_url = "{% url 'setup' %}"
     $("#start_button").on("click", function (event) {
+        //setIntervalのタイマーID。clearInterval(timer_id)でタイマーを止めるのに使用する
+        let timer_id;
+        
         console.log("start")
-        let timer_id = 0;
-        let url = $("#start_button").val();
         $("#start_button").attr({ "disabled": true })
         $.get(url, {},
             function (data) {
                 console.log("get")
                 let pk = data
                 console.log("Data Loaded: " + data);
-
-                timer_id = setInterval(function () { ShowProgressBar(pk) }, 3000)
+                //2000msごとにプログレスバーを更新し始める
+                timer_id = setInterval(function () { ShowProgressBar(pk) }, 2000)
+                //時間のかかる処理を開始する
                 GetResult(pk)
             }
         );
@@ -177,6 +180,7 @@ def index(request):
             $.get("{% url 'show_progress' %}", { progress_pk: progress_pk },
                 function (data) {
                     console.log("Data Loaded: " + data);
+                    //プログレスバーを表示
                     $("#progress").replaceWith(data)
                 }
             );
