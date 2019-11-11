@@ -34,7 +34,7 @@
                 <div id="progress">プログレスバー表示部分</div>
                 <div id="result">処理結果表示部分</div>
                 <div class="row">
-                    <button class="btn btn-primary col-12" id="start_button" value="{% url 'setup' %}">処理の実行</button>
+                    <button class="btn btn-primary col-12" id="start_button">処理の実行</button>
                 </div>
             </div>
         </div>
@@ -44,23 +44,26 @@
     //プログレスバー表示部分の初期状態
     const progresshtml = '<div id="progress">プログレスバー表示部分</div>';
 
+    //処理開始ボタンが押された時の処理
     $("#start_button").on("click", function (event) {
         console.log("start")
         let timer_id = 0;
-        let url = $("#start_button").val();
+        let url = "{% url 'setup' %}"
         $("#start_button").attr({ "disabled": true })
+        //進捗管理インスタンス作成部分
         $.get(url, {},
             function (data) {
                 console.log("get")
                 let pk = data
                 console.log("Data Loaded: " + data);
 
+                //プログレスバーを3秒ごとに取得開始
                 timer_id = setInterval(function () { ShowProgressBar(pk) }, 3000)
+                //時間のかかる処理を開始
                 GetResult(pk)
             }
         );
-
-
+        //プログレスバーの取得
         function ShowProgressBar(progress_pk) {
             $.get("{% url 'show_progress' %}", { progress_pk: progress_pk },
                 function (data) {
@@ -69,18 +72,19 @@
                 }
             );
         }
-
+        //時間のかかる処理
         function GetResult(progress_pk) {
             $.get("{% url 'do_something' %}", { progress_pk: progress_pk },
                 function (data) {
                     console.log("Data Loaded: " + data);
-                    //プログレスバー取得をやめる
+                    //プログレスバー更新をやめる
                     clearInterval(timer_id);
                     //プログレスバー部分を元の状態に戻す
                     $("#progress").replaceWith(progresshtml)
                     //処理結果表示
                     $("#result").replaceWith(data)
                     $("#start_button").attr({ "disabled": false })
+                    alert("処理完了！")
                 }
             );
         }

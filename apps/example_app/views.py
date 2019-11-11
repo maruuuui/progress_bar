@@ -13,6 +13,7 @@ def index(request):
 
 
 def setup(request):
+    """進捗管理インスタンスを作成する"""
     progress = Progress.objects.create()
     return HttpResponse(progress.pk)
 
@@ -31,13 +32,14 @@ def show_progress(request):
 
 
 def make_progress(pk):
+    """引数のプライマリーキーに紐づく進捗を進める"""
     progress = get_object_or_404(Progress, pk=pk)
     progress.now += 10
     progress.save()
 
 
 def set_hikisuu(pk):
-    """引数を設定する"""
+    """引数を固定する"""
     return functools.partial(make_progress, pk=pk)
 
 
