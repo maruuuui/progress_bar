@@ -8,3 +8,5 @@ def slow_function(make_progress_func):
         time.sleep(0.1)
         if i % 10 == 0:
             make_progress_func()
+
+    return "処理完了"

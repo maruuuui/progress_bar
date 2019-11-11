@@ -21,12 +21,12 @@
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
 
-    <title>プログレスバー</title>
+    <title>プログレスバーサンプル</title>
 </head>
 
 <body>
     <div class="container">
-        <div class="card" style="width: 18rem;">
+        <div class="card">
             <div class="card-header">
                 プログレスバーサンプル
             </div>
@@ -41,40 +41,50 @@
     </div>
 </body>
 <script>
+    //プログレスバー表示部分の初期状態
+    const progresshtml = '<div id="progress">プログレスバー表示部分</div>';
+
     $("#start_button").on("click", function (event) {
         console.log("start")
+        let timer_id = 0;
         let url = $("#start_button").val();
-
+        $("#start_button").attr({ "disabled": true })
         $.get(url, {},
             function (data) {
                 console.log("get")
                 let pk = data
                 console.log("Data Loaded: " + data);
-                $("#result").html('<div id="result">aaaaaaaaaaaaa</div>')
 
-                setInterval(function () { ShowProgressBar(pk) }, 3000)
+                timer_id = setInterval(function () { ShowProgressBar(pk) }, 3000)
                 GetResult(pk)
             }
         );
+
+
+        function ShowProgressBar(progress_pk) {
+            $.get("{% url 'show_progress' %}", { progress_pk: progress_pk },
+                function (data) {
+                    console.log("Data Loaded: " + data);
+                    $("#progress").replaceWith(data)
+                }
+            );
+        }
+
+        function GetResult(progress_pk) {
+            $.get("{% url 'do_something' %}", { progress_pk: progress_pk },
+                function (data) {
+                    console.log("Data Loaded: " + data);
+                    //プログレスバー取得をやめる
+                    clearInterval(timer_id);
+                    //プログレスバー部分を元の状態に戻す
+                    $("#progress").replaceWith(progresshtml)
+                    //処理結果表示
+                    $("#result").replaceWith(data)
+                    $("#start_button").attr({ "disabled": false })
+                }
+            );
+        }
     });
-
-    function ShowProgressBar(progress_pk) {
-        $.get("{% url 'show_progress' %}", { progress_pk: progress_pk },
-            function (data) {
-                console.log("Data Loaded: " + data);
-                $("#progress").replaceWith(data)
-            }
-        );
-    }
-
-    function GetResult(pk) {
-        $.get("{% url 'do_something' %}", { progress_pk: progress_pk },
-            function (data) {
-                console.log("Data Loaded: " + data);
-                $("#result").replaceWith(data)
-            }
-        );
-    }
 </script>
 
 </html>
