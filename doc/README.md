@@ -64,7 +64,6 @@ progress_bar
 | |--settings.py
 | |--urls.py
 | |--wsgi.py
-|--djangodoc.md
 |--manage.py
 |--Pipfile
 |--Pipfile.lock
@@ -88,7 +87,8 @@ python ../manage.py startapp example_app   #アプリ作成
 INSTALLED_APPS = +["apps.example_app.apps.ExampleAppConfig"]
 ```
 
-アプリをアプリ用ディレクトリ内に作ったため、このままでは今後の操作でエラーが出るため`apps.py`を編集して対応します。
+今回はアプリをアプリ用ディレクトリ内に作りました。
+このままでは今後の操作でエラーが出るため`apps.py`を編集して対応します。
 
 ```python
 # apps/example_app/apps.py
@@ -104,6 +104,11 @@ class ExampleAppConfig(AppConfig):
 
 ```python
 # apps/example_app/views.py
+from django.shortcuts import render
+
+def index(request):
+    """基本となるページ"""
+    return render(request, "example_app/index.html")
 
 ```
 
@@ -255,6 +260,8 @@ from .models import Progress
 
 ```python
 # apps/example_app/views.pyに以下の内容を追記
+from django.shortcuts import HttpResponse, render, get_object_or_404
+
 def setup(request):
     """進捗管理インスタンスを作成する"""
     progress = Progress.objects.create()
@@ -470,7 +477,11 @@ python ../manage.py runserver   #サーバ起動
 ```
 
 ブラウザから<http://127.0.0.1:8000/>にアクセスして「処理の実行」ボタンを押すと少しずつプログレスバーが進み、右端に到達するあたりで処理結果が表示されるはずです。
-(ブラウザのスクショ)
+
+![動作テスト1](img/動作テスト1.png)
+![動作テスト2](img/動作テスト2.png)
+![動作テスト3](img/動作テスト3.png)
+![動作テスト4](img/動作テスト4.png)
 
 ## 終わりに
 
