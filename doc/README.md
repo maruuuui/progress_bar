@@ -2,14 +2,18 @@
 
 ## 初めに
 
-外部ツールを使いにくい現場でプログレスバーを実装する必要に駆られ、Django単体でプログレスバーを実装しました。
-後学者や今後の自分のためにその方法をまとめてみました。
+hashiです。  
+外部ツールを使いにくい現場でプログレスバーを実装する必要に駆られ、Django単体でプログレスバーを実装しました。  
+後学者や今後の自分が忘れたときのためにその方法をまとめてみました。
+
+## 全体の処理の流れ
+
+(パワポのスクショ)
 
 ## 前提
 
-Windows 10
-Python 3.7.4
-Django 2.2.7
+- Windows 10
+- Python 3.7.4
 
 ## プロジェクト用ディレクトリ作成
 
@@ -22,7 +26,7 @@ cd progress_bar     # その中に入る
 
 ## 仮想環境の作成
 
-既にインストールされているパッケージの影響を受けることを避けるため、新しく作った仮想環境内で1から環境構築していきます。
+既にインストールされているパッケージの影響を受けることを避けるため、新しく作った仮想環境内で1から環境構築していきます。  
 今回はパッケージ管理に`pipenv`を使用します。入っていない場合は、
 
 ```bash
@@ -36,7 +40,8 @@ export PIPENV_VENV_IN_PROJECT=true  # 仮想環境をプロジェクトディレ
 pipenv shell                        # 仮想環境作成！
 ```
 
-これでまっさらな環境が作成できました。これ以降のコマンドは`pipenv shell`を実行して仮想環境に入った状態で実行することを前提とします。
+これでまっさらな環境が作成できました。  
+これ以降のコマンドは`pipenv shell`を実行して仮想環境に入った状態で実行することを前提とします。
 
 ## Djangoのインストール
 
@@ -74,9 +79,9 @@ progress_bar
 `manage.py`と同階層で以下のコマンドを実行します。
 
 ```bash
-mkdir apps                          #アプリ用ディレクトリ作成
-cd apps                             #その中に…
-python ../manage.py startapp example_app   #アプリ作成
+mkdir apps                                  #アプリ用ディレクトリ作成
+cd apps                                     #その中に…
+python ../manage.py startapp example_app    #アプリ作成
 ```
 
 作成したアプリを利用できるようにするために`config/settings.py`に以下の内容を追記します。
@@ -87,8 +92,7 @@ python ../manage.py startapp example_app   #アプリ作成
 INSTALLED_APPS = +["apps.example_app.apps.ExampleAppConfig"]
 ```
 
-今回はアプリをアプリ用ディレクトリ内に作りました。
-このままでは今後の操作でエラーが出るため`apps.py`を編集して対応します。
+続けて`apps/example_app/apps.py`を書き換えます。
 
 ```python
 # apps/example_app/apps.py
@@ -102,6 +106,8 @@ class ExampleAppConfig(AppConfig):
 
 ## トップページのviewの作成
 
+アプリのビューを以下のように記述します。
+
 ```python
 # apps/example_app/views.py
 from django.shortcuts import render
@@ -109,10 +115,12 @@ from django.shortcuts import render
 def index(request):
     """基本となるページ"""
     return render(request, "example_app/index.html")
-
 ```
 
 ## テンプレートの作成
+
+テンプレートにプログレスバーを埋め込む部分を用意しておきます。  
+Bootstrapはプログレスバーの装飾に使用します。
 
 ```html
 <!-- apps\example_app\templates\example_app\index.html -->
@@ -163,6 +171,21 @@ def index(request):
 
 ## urlの設定
 
+まずアプリのurls.pyを作成します。
+
+```python
+# apps/example_app/urls.py
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("", views.index, name="index"),
+]
+```
+
+続けてプロジェクト本体のurls.pyにアプリのurlパターンを読み込ませます。
+
 ```python
 # config/urls.py
 from django.contrib import admin
@@ -176,34 +199,24 @@ urlpatterns = [
 ]
 ```
 
-```python
-# apps/example_app/urls.py
-from django.urls import path
-
-from . import views
-
-urlpatterns = [
-    path("", views.index, name="index"),
-]
-```
-
 ## 表示確認
 
-`manage.py`と同階層で以下のコマンドを実行します。
+これでガワは完成しました。  
+表示の確認のため`manage.py`と同階層で以下のコマンドを実行します。
 
 ```bash
 python ../manage.py runserver   #サーバ起動
 ```
 
 ブラウザから<http://127.0.0.1:8000/>にアクセスして動作確認します。
-(ブラウザのスクショ)
+![動作テスト1](img/動作テスト1.png)
 これが表示されていればOKです。
 
 ## 時間のかかる処理の作成
 
-サンプルとして時間のかかる処理を行う関数を作成します。
-0.1秒ごとに1ステップ進み、10秒後に処理が終了する関数です
-10ループごとに実行される`make_progress_func()`の行う処理は後ほど説明します。
+サンプルとして時間のかかる処理を行う関数を作成します。  
+0.1秒ごとに1ステップ進み、10秒後に処理が終了する関数です。  
+10ループごとに実行される`make_progress_func()`が行う処理は後ほど説明します。
 
 ```python
 # apps\another_app\do_something.py
@@ -254,8 +267,8 @@ from .models import Progress
 
 ### 進捗管理インスタンス作成部分(Django)
 
-時間のかかる処理を実行する前に呼び出される関数を定義します。
-この関数はmodels.pyで定義したProgressのインスタンスを作成し、そのプライマリーキーを返します。
+時間のかかる処理を実行する前に呼び出される関数を定義します。  
+この関数はmodels.pyで定義したProgressのインスタンスを作成し、そのプライマリーキーを返します。  
 この関数が返すプライマリーキーをもとに様々な処理を行うことになります。
 
 ```python
@@ -270,7 +283,7 @@ def setup(request):
 
 ### プログレスバー表示部分(Django)
 
-プログレスバーの表示にかかわる関数を定義します。
+プログレスバーの表示にかかわる関数を定義します。  
 この関数はGETパラメータの`progress_pk`に紐づく進捗管理インスタンスを取得し、その進捗度合いをパーセント換算してプログレスバーのテンプレートに渡します。
 
 ```python
@@ -304,8 +317,8 @@ def make_progress(pk):
 
 ### 重い処理を呼び出す部分(Django)
 
-時間のかかる処理を呼び出す部分を定義します。
-`functools`を用いて引数を固定した関数を引数として`slow_function()`を呼び出します。
+時間のかかる処理を呼び出す部分を定義します。  
+`functools`を用いて引数を固定した`make_progress(pk)`を引数として`slow_function()`を呼び出します。
 
 ```python
 # apps/example_app/views.pyに以下の内容を追記
@@ -347,7 +360,7 @@ urlpatterns += [
 JavaScript部分を追記します。処理のフローは以下の通りです。
 
 - 画面上の処理開始ボタンが押される
-- `/setup`にリクエストし進捗管理インスタンスのPKを取得する
+- `/setup`にリクエストし進捗管理インスタンスのプライマリーキーを取得する
   - `/show_progress`に定期的にリクエストしプログレスバーを取得し、画面上に反映しつづける
   - `/do_something`にリクエストし処理結果を取得し、画面上に反映する
 
@@ -422,7 +435,7 @@ JavaScript部分を追記します。処理のフローは以下の通りです�
 
 ### 重い処理の処理結果部分(テンプレート)
 
-ここでは単に`result`の値を出力するだけのものにしておきます。
+この記事のアプリでは単に`result`の値を出力するだけのものにしておきます。
 
 ```html
 <!-- apps\example_app\templates\example_app\result.html -->
@@ -473,7 +486,7 @@ JavaScript部分を追記します。処理のフローは以下の通りです�
 `manage.py`と同階層で以下のコマンドを実行します。
 
 ```bash
-python ../manage.py runserver   #サーバ起動
+python manage.py runserver   #サーバ起動
 ```
 
 ブラウザから<http://127.0.0.1:8000/>にアクセスして「処理の実行」ボタンを押すと少しずつプログレスバーが進み、右端に到達するあたりで処理結果が表示されるはずです。
@@ -485,5 +498,5 @@ python ../manage.py runserver   #サーバ起動
 
 ## 終わりに
 
-時間のかかる処理を扱う関数と進捗を進める関数の結合を弱めるため、進捗を進める関数の中身を意識せずに済むように意識しました。
+時間のかかる処理を扱う関数と進捗を進める関数の結合を弱めるため、進捗を進める関数の中身を意識せずに済むように意識しました。  
 テスト時に必要なケース数が少なくて済むのは大事ですね。
